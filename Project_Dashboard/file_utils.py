@@ -37,8 +37,8 @@ def get_file_details(folder_path):
                     'TRANSPORTATION': table_data.get('TRANSPORTATION', 0),
                     'PACKING CHARGES': table_data.get('PACKING CHARGES', 0),
                     'पहेले का बकाया': table_data.get('पहेले का बकाया', 0),
-                    'GRAND TOTAL': table_data.get('GRAND TOTAL ', 0),
-                    'ADVANCE': table_data.get('ADVANCE ', 0),
+                    'GRAND TOTAL': table_data.get('GRAND TOTAL', 0),
+                    'ADVANCE': table_data.get('ADVANCE', 0),
                     'PAYABLE': table_data.get('PAYABLE', 0),
                     'File Path': filepath
                 })
