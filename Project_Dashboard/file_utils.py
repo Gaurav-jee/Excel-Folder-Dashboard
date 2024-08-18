@@ -9,11 +9,56 @@ def get_table_from_excel(filepath):
         df = pd.read_excel(filepath, sheet_name=1, engine='openpyxl')
         if df.shape[0] != 1:
             raise ValueError("The table should contain exactly one row of data.")
-        row = df.fillna(0).replace("-", 0).iloc[0].to_dict()
-        return row, True  # Return True or some other value if you need a second return value
+        
+        # Strip whitespace from column names and convert to lowercase
+        df.columns = df.columns.str.strip().str.lower()
+        
+        # Create a mapping of lowercase column names to new concise English names
+        column_mapping = {
+            'total no pcs.': 'total_pieces',
+            'total amount': 'total_amount',
+            'मूर्ति दुकान': 'murti_shop',
+            'गणेश लक्ष्मी दुकान': 'ganesh_lakshmi_shop',
+            'loading charge': 'loading_charge',
+            'transportation': 'transportation',
+            'packing charges': 'packing_charges',
+            'पहेले का बकाया': 'previous_balance',
+            'grand total': 'grand_total',
+            'advance': 'advance',
+            'payable': 'payable'
+        }
+        
+        # Rename columns using the mapping
+        df.rename(columns=column_mapping, inplace=True)
+        
+        # Define data types for each column
+        data_types = {
+            'total_pieces': 'int',
+            'total_amount': 'float',
+            'murti_shop': 'float',
+            'ganesh_lakshmi_shop': 'float',
+            'loading_charge': 'float',
+            'transportation': 'float',
+            'packing_charges': 'float',
+            'previous_balance': 'float',
+            'grand_total': 'float',
+            'advance': 'float',
+            'payable': 'float'
+        }
+        
+        # Convert data types and replace "-" with 0
+        for col, dtype in data_types.items():
+            if col in df.columns:
+                df[col] = df[col].replace("-", 0)
+                df[col] = df[col].astype(dtype)
+        
+        # Convert the row to a dictionary
+        row = df.iloc[0].to_dict()
+        
+        return row, True
     except Exception as e:
         print(f"Error reading {filepath}: {e}")
-        return {}, False  # Return False or some other value if there’s an error
+        return {}, False
 
 def get_file_details(folder_path):
     file_list = []

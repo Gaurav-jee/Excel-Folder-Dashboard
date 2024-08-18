@@ -2,12 +2,14 @@ import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import subprocess
+import pandas as pd
 import platform
-from datetime import datetime
+from datetime import datetime, timedelta
 from file_utils import get_file_details, write_cache, read_cache, get_table_from_excel
 from ui_utils import (setup_modern_style, setup_treeview, add_scrollbars, create_rounded_button,
                       create_export_frame, create_percentage_label)
 from json_utils import get_default_paths, update_default_paths
+
 
 # Initialize the main application window
 root = tk.Tk()
@@ -25,9 +27,9 @@ cache_path = tk.StringVar(value=default_cache_path)
 # Define initial columns and additional columns from the Excel table
 predefined_columns = ["S.L.", "Name of the file", "Date of Creation", "Date of Modification", "File Path"]
 additional_columns = [
-    "TOTAL NO PCS.", "TOTAL AMOUNT", "मूर्ति दुकान", "गणेश लक्ष्मी दुकान",
-    "LOADING CHARGE", "TRANSPORTATION", "PACKING CHARGES", "पहेले का बकाया",
-    "GRAND TOTAL", "ADVANCE", "PAYABLE"
+    "total_pieces", "total_amount", "murti_shop", "ganesh_lakshmi_shop",
+    "loading_charge", "transportation", "packing_charges", "previous_balance",
+    "grand_total", "advance", "payable"
 ]
 
 # Combine predefined columns with additional columns
@@ -170,6 +172,48 @@ def load_initial_data():
             messagebox.showinfo("Info", "No cached data found. Please refresh to load data.")
     else:
         messagebox.showinfo("Info", "Please select a cache file and refresh to load data.")
+
+def perform_analytics():
+    data = []
+    for item in tree.get_children():
+        values = tree.item(item)['values']
+        data.append(dict(zip(columns, values)))
+    
+    df = pd.DataFrame(data)
+    df['Date of Creation'] = pd.to_datetime(df['Date of Creation'])
+    df['total_amount'] = pd.to_numeric(df['total_amount'], errors='coerce')
+    
+    # Daily sales report
+    daily_sales = df.groupby(df['Date of Creation'].dt.date)['total_amount'].sum()
+    
+    # Total sales
+    total_sales = df['total_amount'].sum()
+    
+    # Last 7 days sales
+    last_7_days = datetime.now().date() - timedelta(days=7)
+    last_7_days_sales = df[df['Date of Creation'].dt.date > last_7_days]['total_amount'].sum()
+    
+    # Top 5 selling days
+    top_5_days = daily_sales.nlargest(5)
+    
+    # Create a new window to display analytics
+    analytics_window = tk.Toplevel(root)
+    analytics_window.title("Sales Analytics")
+    analytics_window.geometry("600x400")
+    
+    # Display analytics results
+    ttk.Label(analytics_window, text=f"Total Sales: {total_sales:.2f}", font=("Helvetica", 14)).pack(pady=10)
+    ttk.Label(analytics_window, text=f"Last 7 Days Sales: {last_7_days_sales:.2f}", font=("Helvetica", 14)).pack(pady=10)
+    
+    ttk.Label(analytics_window, text="Top 5 Selling Days:", font=("Helvetica", 14)).pack(pady=10)
+    for date, amount in top_5_days.items():
+        ttk.Label(analytics_window, text=f"{date}: {amount:.2f}", font=("Helvetica", 12)).pack()
+    
+    # You can add more analytics as needed
+
+# Create the analytics button
+analytics_button = create_rounded_button(root, "Perform Analytics", perform_analytics)
+analytics_button.pack(pady=10)
 
 # Load initial data button
 load_button = create_rounded_button(root, "Load Cached Data", load_initial_data)

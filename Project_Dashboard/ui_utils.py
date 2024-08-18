@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import csv
 import json
+from tkinter import font
 
 def setup_modern_style():
     style = ttk.Style()
@@ -29,7 +30,23 @@ def setup_treeview(frame, columns):
     tree = ttk.Treeview(frame, columns=columns, show='headings')
     for col in columns:
         tree.heading(col, text=col, command=lambda _col=col: treeview_sort_column(tree, _col, False))
-        tree.column(col, width=150, anchor="center")
+        
+        # Set a minimum width for each column
+        tree.column(col, width=100, minwidth=100)
+    
+    def adjust_columns(event):
+        for col in columns:
+            # Find the maximum width needed for the column
+            max_width = max(
+                tree.column(col, 'width'),
+                font.measure(col) + 20,  # Width of the header
+                max(font.measure(str(tree.set(item, col))) for item in tree.get_children()) + 20
+            )
+            tree.column(col, width=max_width)
+    
+    # Bind the function to configure event (which is called when the widget is resized)
+    tree.bind('<Configure>', adjust_columns)
+    
     return tree
 
 def treeview_sort_column(tv, col, reverse):
